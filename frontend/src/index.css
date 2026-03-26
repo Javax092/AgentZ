@@ -1,0 +1,215 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color: #f3f7fb;
+  background: #0b0f14;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: "Manrope", sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(91, 140, 255, 0.16), transparent 22%),
+    radial-gradient(circle at 90% 10%, rgba(124, 92, 255, 0.14), transparent 18%),
+    radial-gradient(circle at bottom right, rgba(30, 201, 139, 0.08), transparent 18%),
+    linear-gradient(180deg, #08111f 0%, #0b0f14 100%);
+  color: #f3f7fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: rgba(91, 140, 255, 0.32);
+  color: #f8fbff;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -3rem;
+  z-index: 100;
+  border-radius: 999px;
+  background: #091525;
+  color: white;
+  padding: 0.75rem 1rem;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+.app-shell-fallback {
+  position: relative;
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  overflow: hidden;
+  padding: 1.5rem;
+}
+
+.app-shell-fallback__glow {
+  position: absolute;
+  inset: auto 50% 60% auto;
+  width: 28rem;
+  height: 28rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.16), transparent 68%);
+  filter: blur(8px);
+  transform: translateX(50%);
+}
+
+.app-shell-fallback__card {
+  position: relative;
+  width: min(100%, 34rem);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 2rem;
+  background: rgba(17, 25, 38, 0.84);
+  box-shadow: 0 24px 80px rgba(2, 6, 23, 0.32);
+  backdrop-filter: blur(18px);
+  padding: 1.5rem;
+}
+
+.app-shell-fallback__brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.app-shell-fallback__brand strong {
+  display: block;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.5rem;
+}
+
+.app-shell-fallback__brand p {
+  margin: 0.35rem 0 0;
+  color: #94a3b8;
+}
+
+.app-shell-fallback__badge {
+  display: inline-grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #5b8cff, #7c5cff);
+  color: white;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.app-shell-fallback__bars {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.app-shell-fallback__bars span {
+  display: block;
+  height: 0.875rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(91, 140, 255, 0.18), rgba(124, 92, 255, 0.16), rgba(255, 255, 255, 0.08));
+  background-size: 200% 100%;
+  animation: shimmer 1.8s linear infinite;
+}
+
+.app-shell-fallback__bars span:nth-child(2) {
+  width: 84%;
+}
+
+.app-shell-fallback__bars span:nth-child(3) {
+  width: 68%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@layer components {
+  .surface-panel {
+    @apply rounded-[28px] border border-white/10 bg-white/5 text-white shadow-panel backdrop-blur-xl;
+  }
+
+  .surface-dark {
+    @apply rounded-[28px] border border-white/10 bg-slatecard text-white shadow-panel;
+    background-image:
+      radial-gradient(circle at top right, rgba(91, 140, 255, 0.18), transparent 28%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(15, 23, 42, 0));
+  }
+
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400;
+  }
+
+  .field-input {
+    @apply w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 outline-none transition placeholder:text-slate-500 focus:border-brand focus:ring-4 focus:ring-brand/10;
+  }
+
+  .field-input-dark {
+    @apply w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-slate-200 outline-none transition placeholder:text-slate-400 focus:border-brand focus:bg-white/15 focus:ring-4 focus:ring-brand/10;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-coral to-brand px-5 py-3 text-sm font-semibold text-white shadow-soft transition duration-200 hover:-translate-y-0.5 hover:shadow-panel disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition duration-200 hover:border-white/20 hover:bg-white/10;
+  }
+
+  .metric-pill {
+    @apply inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-300;
+  }
+
+  .glass-overlay {
+    @apply bg-white/5 backdrop-blur-md;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

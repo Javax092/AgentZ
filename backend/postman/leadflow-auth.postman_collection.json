@@ -1,0 +1,82 @@
+{
+  "info": {
+    "name": "LeadFlow Auth Demo",
+    "_postman_id": "f9fc43c0-6c0c-4c54-8cf2-dcb83c628c16",
+    "description": "Colecao manual para validar login demo, refresh, fallback e simulacao de falhas.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/health"
+      }
+    },
+    {
+      "name": "Demo Capabilities",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/auth/demo-capabilities"
+      }
+    },
+    {
+      "name": "Login Demo",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@leadflow.ai\",\n  \"password\": \"123456\"\n}"
+        },
+        "url": "{{baseUrl}}/api/auth/login"
+      }
+    },
+    {
+      "name": "Login Demo Simulated Timeout",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "x-demo-simulate", "value": "timeout" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@leadflow.ai\",\n  \"password\": \"123456\"\n}"
+        },
+        "url": "{{baseUrl}}/api/auth/login"
+      }
+    },
+    {
+      "name": "Refresh",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}"
+        },
+        "url": "{{baseUrl}}/api/auth/refresh"
+      }
+    },
+    {
+      "name": "Me",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "url": "{{baseUrl}}/api/auth/me"
+      }
+    }
+  ]
+}

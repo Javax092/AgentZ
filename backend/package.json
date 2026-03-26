@@ -1,0 +1,19 @@
+{
+  "name": "botml-backend",
+  "version": "1.0.0",
+  "description": "Backend do Agente de Leads",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^4.18.2"
+  }
+}
