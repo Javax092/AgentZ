@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from app.models.enums import LeadStatus, PipelineStage, SolutionInterest
+from app.models.enums import LeadStatus, MessageChannel, MessageDirection, PipelineStage, SolutionInterest
 from app.schemas.ai import LeadAIAnalysis, LeadAIMessages, LeadAIState
 
 
@@ -15,6 +15,21 @@ class LeadActivityOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class LeadInteractionOut(BaseModel):
+    id: int
+    channel: MessageChannel
+    direction: MessageDirection
+    status: str
+    subject: str
+    content: str
+    summary: str
+    scheduled_for: datetime | None = None
+    sent_at: datetime | None = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class LeadBase(BaseModel):
     company_name: str
     contact_name: str
@@ -22,6 +37,8 @@ class LeadBase(BaseModel):
     phone: str
     niche: str
     city: str
+    owner_name: str = "Equipe comercial"
+    interest_summary: str = ""
     company_size: str = "small"
     solution_interest: SolutionInterest
     website_status: str = "outdated"
@@ -32,6 +49,8 @@ class LeadBase(BaseModel):
     notes: str = ""
     pain_points: list[str] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
+    next_action: str = ""
+    next_action_at: datetime | None = None
 
 
 class LeadCreate(LeadBase):
@@ -45,6 +64,8 @@ class LeadUpdate(BaseModel):
     phone: str | None = None
     niche: str | None = None
     city: str | None = None
+    owner_name: str | None = None
+    interest_summary: str | None = None
     company_size: str | None = None
     solution_interest: SolutionInterest | None = None
     website_status: str | None = None
@@ -55,6 +76,8 @@ class LeadUpdate(BaseModel):
     notes: str | None = None
     pain_points: list[str] | None = None
     tags: list[str] | None = None
+    next_action: str | None = None
+    next_action_at: datetime | None = None
     status: LeadStatus | None = None
     pipeline_stage: PipelineStage | None = None
 
@@ -63,18 +86,23 @@ class LeadOut(LeadBase):
     id: int
     score: int
     score_label: str
+    temperature: str
+    responsible: str
+    interest: str
     diagnosis: str
     suggested_offer: str
     generated_message: str
     status: LeadStatus
     pipeline_stage: PipelineStage
     last_contact_at: datetime | None
+    last_interaction_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
     ai_analysis: LeadAIAnalysis | None = None
     ai_messages: LeadAIMessages | None = None
     ai_state: LeadAIState | None = None
     activities: list[LeadActivityOut] = Field(default_factory=list)
+    interactions: list[LeadInteractionOut] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
 

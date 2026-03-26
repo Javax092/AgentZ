@@ -3,6 +3,7 @@ from enum import Enum
 
 class LeadStatus(str, Enum):
     new = "new"
+    contacted = "contacted"
     qualified = "qualified"
     proposal = "proposal"
     negotiation = "negotiation"
@@ -11,11 +12,12 @@ class LeadStatus(str, Enum):
 
 
 class PipelineStage(str, Enum):
-    entry = "entrada"
-    diagnosis = "diagnostico"
+    new = "novo"
+    contact_started = "contato_iniciado"
+    qualified = "qualificado"
     proposal = "proposta"
-    negotiation = "negociacao"
     closed = "fechado"
+    lost = "perdido"
 
 
 class SolutionInterest(str, Enum):
@@ -23,3 +25,16 @@ class SolutionInterest(str, Enum):
     landing_page = "landing_page"
     web_system = "web_system"
     mixed = "mixed"
+
+
+class MessageChannel(str, Enum):
+    whatsapp = "whatsapp"
+    email = "email"
+    call = "call"
+    note = "note"
+
+
+class MessageDirection(str, Enum):
+    inbound = "inbound"
+    outbound = "outbound"
+    internal = "internal"

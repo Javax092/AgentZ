@@ -61,10 +61,10 @@ python3 -m unittest discover -s tests
 
 Configure o serviço para apontar para `backend` como Root Directory.
 
-Parâmetros recomendados:
+Parâmetros validados:
 
 - Root Directory: `backend`
-- Start Command: deixar vazio se o Railway respeitar `railway.json` e `Procfile`; se quiser forçar na UI, use `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 - Runtime/Builder: Python via Nixpacks
 
 Arquivos de deploy:

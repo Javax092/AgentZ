@@ -56,6 +56,25 @@ class AIFullAnalysisRequest(BaseModel):
     custom_context: str | None = None
 
 
+class AISuggestResponseOut(BaseModel):
+    channel: Literal["whatsapp", "email", "call"]
+    message: str
+    rationale: str
+
+
+class AISummaryOut(BaseModel):
+    summary: str
+    score: int
+    temperature: Literal["cold", "warm", "hot"]
+    next_action: str
+
+
+class AINextActionOut(BaseModel):
+    recommended_action: str
+    why_now: str
+    urgency: Literal["low", "medium", "high"]
+
+
 class AIHealthOut(BaseModel):
     enabled: bool
     configured: bool

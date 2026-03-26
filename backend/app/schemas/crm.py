@@ -15,10 +15,22 @@ class LeadActivityCreate(BaseModel):
     description: str
 
 
+class CRMBoardLeadOut(BaseModel):
+    id: int
+    company_name: str
+    contact_name: str
+    score: int
+    score_label: str
+    status: str
+    next_action: str
+    owner_name: str
+
+
 class CRMColumnOut(BaseModel):
     stage: PipelineStage
+    label: str
     count: int
-    leads: list[dict]
+    leads: list[CRMBoardLeadOut]
 
 
 class CRMBoardOut(BaseModel):

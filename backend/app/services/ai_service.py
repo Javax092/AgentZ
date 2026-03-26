@@ -10,7 +10,10 @@ from app.integrations.gemini_client import get_gemini_model, get_gemini_status
 from app.models.enums import LeadStatus
 from app.models.lead import Lead, LeadActivity
 from app.schemas.ai import (
+    AINextActionOut,
     AIHealthOut,
+    AISuggestResponseOut,
+    AISummaryOut,
     LeadAIAnalysis,
     LeadAIMessages,
     LeadAIRecommendedService,
@@ -35,6 +38,8 @@ def _lead_payload(lead: Lead) -> dict[str, object]:
         "phone": lead.phone,
         "niche": lead.niche,
         "city": lead.city,
+        "owner_name": lead.owner_name,
+        "interest_summary": lead.interest_summary,
         "company_size": lead.company_size,
         "solution_interest": lead.solution_interest.value,
         "website_status": lead.website_status,
@@ -43,6 +48,7 @@ def _lead_payload(lead: Lead) -> dict[str, object]:
         "urgency_days": lead.urgency_days,
         "source": lead.source,
         "notes": lead.notes,
+        "next_action": lead.next_action,
         "pain_points": lead.pain_points,
         "tags": lead.tags,
         "pipeline_stage": lead.pipeline_stage.value,
@@ -53,7 +59,7 @@ def _lead_payload(lead: Lead) -> dict[str, object]:
 def _local_analysis(lead: Lead, db: Session) -> LeadAIAnalysis:
     settings_model = get_or_create_settings(db)
     score = calculate_score(lead, settings_model)
-    score_label = classify_score(score)
+    score_label = classify_score(score, settings_model)
     return LeadAIAnalysis(
         summary=(
             f"{lead.company_name} tem aderencia comercial {score_label} para a operacao atual, "
@@ -107,8 +113,8 @@ def _local_messages(lead: Lead, db: Session, custom_context: str | None = None) 
     return LeadAIMessages(
         whatsapp=base_message,
         follow_up=(
-            f"Oi, {lead.contact_name}. Retomando nosso contato porque vi que a {lead.company_name} "
-            "tem um ganho claro com um ajuste simples no processo comercial. Posso te mandar um esboco objetivo?"
+            f"Oi, {lead.contact_name}. {settings_model.follow_up_message} "
+            f"Na {lead.company_name}, vejo um ganho claro com um ajuste simples no processo comercial. Posso te mandar um esboco objetivo?"
         ),
         email_subject=f"Ideia pratica para destravar o comercial da {lead.company_name}",
         email_body=(
@@ -184,7 +190,7 @@ def _gemini_analysis(lead: Lead, db: Session) -> LeadAIAnalysis:
         temperature=0.2,
     )
     parsed.score.value = max(0, min(100, parsed.score.value))
-    parsed.score.label = classify_score(parsed.score.value)
+    parsed.score.label = classify_score(parsed.score.value, settings_model)
     return parsed
 
 
@@ -213,6 +219,7 @@ def _gemini_messages(lead: Lead, db: Session, custom_context: str | None = None)
 
 
 def _persist_state(
+    db: Session,
     lead: Lead,
     *,
     analysis: LeadAIAnalysis | None = None,
@@ -227,9 +234,10 @@ def _persist_state(
         lead.diagnosis = analysis.diagnosis
         lead.suggested_offer = analysis.recommended_service.name
         lead.score = analysis.score.value
-        lead.score_label = classify_score(analysis.score.value)
+        lead.score_label = classify_score(analysis.score.value, get_or_create_settings(db))
         if lead.score >= 60 and lead.status == LeadStatus.new:
             lead.status = LeadStatus.qualified
+        lead.next_action = analysis.next_steps[0] if analysis.next_steps else lead.next_action
 
     if messages is not None:
         lead.ai_messages = messages.model_dump(mode="json")
@@ -266,6 +274,7 @@ def analyze_lead(db: Session, lead: Lead) -> Lead:
         last_error = str(exc) if fallback_used else None
 
     _persist_state(
+        db,
         lead,
         analysis=analysis,
         analysis_source=source,
@@ -288,6 +297,7 @@ def generate_lead_messages(db: Session, lead: Lead, custom_context: str | None =
         last_error = str(exc) if fallback_used else None
 
     _persist_state(
+        db,
         lead,
         messages=messages,
         messages_source=source,
@@ -320,6 +330,7 @@ def generate_full_analysis(db: Session, lead: Lead, custom_context: str | None =
         errors.append(str(exc))
 
     _persist_state(
+        db,
         lead,
         analysis=analysis,
         messages=messages,
@@ -338,3 +349,34 @@ def generate_full_analysis(db: Session, lead: Lead, custom_context: str | None =
 
 def ai_health() -> AIHealthOut:
     return AIHealthOut.model_validate(get_gemini_status())
+
+
+def suggest_response(db: Session, lead: Lead, channel: str = "whatsapp") -> AISuggestResponseOut:
+    messages = _local_messages(lead, db)
+    message = messages.whatsapp if channel == "whatsapp" else messages.email_body if channel == "email" else messages.call_script
+    return AISuggestResponseOut(
+        channel=channel,  # type: ignore[arg-type]
+        message=message,
+        rationale="Resposta sugerida considerando configuracoes do negocio, score atual e dores do lead.",
+    )
+
+
+def summarize_lead(db: Session, lead: Lead) -> AISummaryOut:
+    analysis = lead.ai_analysis or _local_analysis(lead, db).model_dump(mode="json")
+    return AISummaryOut(
+        summary=str(analysis.get("summary") or lead.diagnosis),
+        score=lead.score,
+        temperature=lead.score_label,  # type: ignore[arg-type]
+        next_action=lead.next_action or "Realizar follow-up consultivo",
+    )
+
+
+def recommend_next_action(db: Session, lead: Lead) -> AINextActionOut:
+    settings_model = get_or_create_settings(db)
+    urgency = "high" if lead.score_label == "hot" else "medium" if lead.score_label == "warm" else "low"
+    action = lead.next_action or f"Executar follow-up em ate {settings_model.follow_up_delay_hours} horas."
+    return AINextActionOut(
+        recommended_action=action,
+        why_now=f"O lead esta em {lead.pipeline_stage.value} com temperatura {lead.score_label} e objetivo principal '{settings_model.primary_goal}'.",
+        urgency=urgency,  # type: ignore[arg-type]
+    )

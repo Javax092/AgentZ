@@ -1,15 +1,60 @@
 from sqlalchemy.orm import Session
 
+from app.models.enums import MessageChannel, MessageDirection
 from app.models.lead import Lead
+from app.models.message_template import MessageTemplate
+from app.models.user import User
 from app.models.enums import LeadStatus, PipelineStage
 from app.schemas.lead import LeadCreate
 from app.schemas.lead import LeadUpdate
+from app.schemas.messages import LeadInteractionIn, MessageTemplateIn
 from app.services.lead_service import create_lead, get_lead_by_id, update_lead
+from app.services.message_service import create_interaction, create_template
 from app.services.settings_service import get_or_create_settings
 
 
 def seed_database(db: Session) -> None:
-    get_or_create_settings(db)
+    settings = get_or_create_settings(db)
+    if not settings.description:
+        settings.description = "CRM com IA para captar, qualificar e converter leads de pequenos negocios."
+        db.commit()
+
+    if db.query(User).count() == 0:
+        db.add(User(name="Admin Demo", email="admin@leadflow.ai", role="admin", password_hash="demo-password"))
+        db.commit()
+
+    if db.query(MessageTemplate).count() == 0:
+        create_template(
+            db,
+            MessageTemplateIn(
+                name="Abordagem inicial WhatsApp",
+                channel=MessageChannel.whatsapp,
+                goal="primeiro_contato",
+                content="Oi, {{lead_name}}. Analisei a operacao da {{company_name}} e vi uma oportunidade clara de melhorar o fluxo comercial. Posso te mostrar uma ideia objetiva?",
+                is_active=True,
+            ),
+        )
+        create_template(
+            db,
+            MessageTemplateIn(
+                name="Follow-up consultivo",
+                channel=MessageChannel.whatsapp,
+                goal="follow_up",
+                content="Oi, {{lead_name}}. Retomando nosso contato porque ainda vejo espaco para a {{company_name}} ganhar velocidade nas vendas. Quer que eu te envie uma sugestao pratica?",
+                is_active=True,
+            ),
+        )
+        create_template(
+            db,
+            MessageTemplateIn(
+                name="Resumo por email",
+                channel=MessageChannel.email,
+                goal="resumo_proposta",
+                content="Assunto: Oportunidade comercial para {{company_name}}\n\nOla, {{lead_name}}. Estruturei uma recomendacao objetiva para melhorar captacao, qualificacao e follow-up.",
+                is_active=True,
+            ),
+        )
+
     if db.query(Lead).count() > 0:
         return
 
@@ -54,7 +99,7 @@ def seed_database(db: Session) -> None:
             tags=["saude", "alta-prioridade", "implantes"],
             notes="Quer organizar primeira consulta e confirmar faltosos automaticamente.",
             ),
-            LeadUpdate(pipeline_stage=PipelineStage.diagnosis, status=LeadStatus.qualified),
+            LeadUpdate(pipeline_stage=PipelineStage.qualified, status=LeadStatus.qualified, next_action="Agendar reuniao de diagnostico"),
         ),
         (
             LeadCreate(
@@ -75,7 +120,7 @@ def seed_database(db: Session) -> None:
             tags=["crm", "imoveis", "alto-ticket"],
             notes="Busca centralizar atendimento de lancamentos e revenda.",
             ),
-            LeadUpdate(pipeline_stage=PipelineStage.proposal, status=LeadStatus.proposal),
+            LeadUpdate(pipeline_stage=PipelineStage.proposal, status=LeadStatus.proposal, next_action="Apresentar proposta comercial"),
         ),
         (
             LeadCreate(
@@ -117,7 +162,7 @@ def seed_database(db: Session) -> None:
             tags=["beleza", "agenda", "whatsapp"],
             notes="Quer automatizar lembretes e campanhas de reativacao.",
             ),
-            LeadUpdate(pipeline_stage=PipelineStage.diagnosis, status=LeadStatus.qualified),
+            LeadUpdate(pipeline_stage=PipelineStage.contact_started, status=LeadStatus.contacted, next_action="Enviar follow-up no WhatsApp"),
         ),
         (
             LeadCreate(
@@ -138,7 +183,7 @@ def seed_database(db: Session) -> None:
             tags=["saude", "premium", "sistema"],
             notes="Ja investe em trafego e precisa integrar captura, triagem e acompanhamento.",
             ),
-            LeadUpdate(pipeline_stage=PipelineStage.negotiation, status=LeadStatus.negotiation),
+            LeadUpdate(pipeline_stage=PipelineStage.proposal, status=LeadStatus.proposal, next_action="Negociar escopo e ROI"),
         ),
         (
             LeadCreate(
@@ -159,7 +204,7 @@ def seed_database(db: Session) -> None:
             tags=["lancamentos", "crm", "qualificacao"],
             notes="Precisa separar lead de compra, aluguel e investimento antes do repasse.",
             ),
-            LeadUpdate(pipeline_stage=PipelineStage.closed, status=LeadStatus.won),
+            LeadUpdate(pipeline_stage=PipelineStage.closed, status=LeadStatus.won, next_action="Iniciar onboarding"),
         ),
         (
             LeadCreate(
@@ -187,8 +232,34 @@ def seed_database(db: Session) -> None:
     for sample, patch in samples:
         created = create_lead(db, sample)
         if not patch:
+            lead = get_lead_by_id(db, created.id)
+            if lead:
+                create_interaction(
+                    db,
+                    lead,
+                    LeadInteractionIn(
+                        channel=MessageChannel.whatsapp,
+                        direction=MessageDirection.outbound,
+                        status="sent",
+                        content=lead.generated_message,
+                        summary="Mensagem inicial disparada ao criar lead seed.",
+                    ),
+                )
             continue
 
         lead = get_lead_by_id(db, created.id)
         if lead:
             update_lead(db, lead, patch)
+            refreshed = get_lead_by_id(db, created.id)
+            if refreshed:
+                create_interaction(
+                    db,
+                    refreshed,
+                    LeadInteractionIn(
+                        channel=MessageChannel.whatsapp,
+                        direction=MessageDirection.outbound,
+                        status="sent",
+                        content=refreshed.generated_message,
+                        summary="Contato comercial inicial registrado no seed.",
+                    ),
+                )

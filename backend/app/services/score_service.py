@@ -2,10 +2,13 @@ from app.models.agent_settings import AgentSettings
 from app.models.lead import Lead
 
 
-def classify_score(score: int) -> str:
-    if score >= 80:
+def classify_score(score: int, settings: AgentSettings | None = None) -> str:
+    hot_threshold = settings.hot_lead_score_threshold if settings else 80
+    warm_threshold = max(40, hot_threshold - 20)
+
+    if score >= hot_threshold:
         return "hot"
-    if score >= 60:
+    if score >= warm_threshold:
         return "warm"
     return "cold"
 
