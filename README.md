@@ -1,66 +1,75 @@
-# LeadFlow AI
+# AgentZ
 
-CRM comercial para captação, qualificação, diagnóstico e acompanhamento de leads, com integração real na API e fallback demo/offline para uso local.
+Monorepo full stack com backend FastAPI preparado para deploy no Railway e frontend React + Vite preparado para deploy na Vercel.
 
-## O que está funcional
+## Visão geral
 
-- login pela API real em `POST /api/auth/login`
-- sessão persistida com bearer token e refresh automático
-- dashboard consumindo API real
-- CRUD de leads
-- score, diagnóstico e mensagem inicial calculados no backend
-- CRM com movimentação de pipeline e histórico de atividades
-- settings com recálculo dos leads
-- fallback demo/offline no frontend quando a API ficar indisponível
-- logs em desenvolvimento
-- tratamento global de erros no backend e na UI
-- seed inicial com 8 leads realistas de Manaus
+O objetivo desta estrutura é evitar autodetecção frágil de stack e permitir deploy independente por subdiretório:
+
+- Railway deve apontar para `backend`
+- Vercel deve apontar para `frontend`
+
+Cada aplicação agora tem configuração própria, variáveis separadas e documentação isolada.
 
 ## Estrutura
 
 ```text
-.
+AgentZ/
 ├── backend/
 │   ├── app/
-│   ├── package.json
+│   ├── postman/
+│   ├── tests/
+│   ├── .env.example
+│   ├── Procfile
+│   ├── railway.json
 │   ├── requirements.txt
-│   └── server.js
+│   ├── runtime.txt
+│   └── README.md
 ├── docs/
-└── frontend/
-    ├── src/
-    └── package.json
+│   └── legacy/
+│       └── backend-node-auth/
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   ├── .env.example
+│   ├── package.json
+│   └── README.md
+├── .gitignore
+└── README.md
 ```
 
 ## Variáveis de ambiente
 
 ### Backend
 
-Copie `backend/.env.example` para `backend/.env` se quiser customizar.
-
-Principais variáveis:
+Arquivo: `backend/.env`
 
 ```env
 APP_ENV=development
-APP_HOST=0.0.0.0
 APP_PORT=8000
 DATABASE_URL=sqlite:///./leadflow.db
 CORS_ORIGINS=http://localhost:5173
-DEMO_EMAIL=admin@leadflow.ai
-DEMO_PASSWORD=123456
-AUTH_JWT_SECRET=leadflow-local-demo-secret
+AUTH_JWT_SECRET=change-me-in-production
+GEMINI_ENABLED=false
+GEMINI_API_KEY=
 ```
 
 ### Frontend
 
-Use `frontend/.env.example` ou exporte:
+Arquivo: `frontend/.env`
 
 ```env
 VITE_API_BASE_URL=http://localhost:8000/api
 ```
 
-## Subindo localmente
+Regras:
 
-### 1. Backend da API real
+- tudo que começa com `VITE_` fica exposto ao navegador
+- segredos ficam apenas no backend
+
+## Rodando localmente
+
+### Backend
 
 ```bash
 cd backend
@@ -70,13 +79,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Observações:
-
-- a API usa SQLite por padrão em `backend/leadflow.db`
-- no primeiro boot ela cria o schema e faz seed automático
-- se você já tinha um banco antigo e quiser reaplicar o seed novo, remova `backend/leadflow.db` antes de subir a API
-
-### 2. Frontend
+### Frontend
 
 ```bash
 cd frontend
@@ -84,66 +87,59 @@ npm install
 npm run dev
 ```
 
-O app ficará disponível em `http://localhost:5173`.
+## Build local
 
-## Login demo
+### Backend
 
-- email: `admin@leadflow.ai`
-- senha: `123456`
+```bash
+cd backend
+python3 -m compileall app
+python3 -m unittest discover -s tests
+```
 
-## API usada pelo frontend
+### Frontend
 
-O frontend usa uma única base configurada por `VITE_API_BASE_URL`.
+```bash
+cd frontend
+npm install
+npm run build
+npm run preview
+```
 
-Rotas principais:
+## Deploy no Railway
 
-- `GET /api/health`
-- `POST /api/auth/login`
-- `POST /api/auth/refresh`
-- `GET /api/auth/me`
-- `GET /api/dashboard`
-- `GET /api/leads`
-- `POST /api/leads`
-- `GET /api/leads/{lead_id}`
-- `PUT /api/leads/{lead_id}`
-- `DELETE /api/leads/{lead_id}`
-- `GET /api/crm/board`
-- `POST /api/crm/leads/{lead_id}/move`
-- `POST /api/crm/leads/{lead_id}/activities`
-- `POST /api/approaches/generate`
-- `GET /api/settings`
-- `PUT /api/settings`
+Backend pronto para deploy isolado a partir de `backend`.
 
-## Fallback demo/offline
+Checklist:
 
-Se a API real estiver fora do ar:
+- Root Directory: `backend`
+- Variáveis configuradas no serviço: `DATABASE_URL`, `CORS_ORIGINS`, `AUTH_JWT_SECRET`, `GEMINI_*` quando necessário
+- Start command explícito: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- Não depender de arquivos da raiz do monorepo
 
-- o login demo pode cair para sessão offline
-- dashboard, CRM, leads, mensagens e settings passam a operar com seed local
-- o frontend sinaliza visualmente quando está em modo demo local
+Arquivos usados pelo Railway:
 
-## Seed inicial
+- `backend/requirements.txt`
+- `backend/Procfile`
+- `backend/railway.json`
+- `backend/runtime.txt`
 
-O projeto sobe com 8 leads de Manaus já preenchidos para dashboard e CRM:
+## Deploy na Vercel
 
-- barbearias
-- clínicas
-- imobiliárias
-- loja de móveis
-- salão de beleza
+Frontend pronto para deploy isolado a partir de `frontend`.
 
-Os leads entram com scores, diagnósticos, mensagens, etapas e status variados.
+Checklist:
 
-## Validação feita
+- Root Directory: `frontend`
+- Framework Preset: `Vite`
+- Install Command: `npm install`
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- Variável obrigatória: `VITE_API_BASE_URL=https://seu-backend.up.railway.app/api`
 
-- `cd frontend && npm run build`
-- `cd backend && python3 -m compileall app`
+## Notas de robustez
 
-Observação:
-
-- não foi possível executar teste HTTP do backend aqui porque as dependências Python do ambiente atual não estavam instaladas
-
-## Notas
-
-- `backend/server.js` continua no repositório como backend Node legado de autenticação, mas o frontend integrado agora usa a API FastAPI em `VITE_API_BASE_URL`
-- a autenticação do app usa bearer token no header `Authorization`
+- O backend Node legado foi retirado de `backend/` e preservado em `docs/legacy/backend-node-auth/`.
+- `node_modules`, `dist`, `.venv`, banco local e arquivos gerados agora ficam ignorados no Git.
+- O backend aceita `PORT` automaticamente em produção e `APP_PORT` em ambiente local.
+- O frontend mantém somente variáveis públicas com prefixo `VITE_`.

@@ -1,115 +1,79 @@
-# Backend LeadFlow AI
+# Backend AgentZ
+
+API FastAPI isolada para deploy no Railway a partir do subdiretório `backend`.
 
 ## Estrutura
 
 ```text
 backend/
 ├── app/
-│   ├── api/
-│   │   ├── deps.py
-│   │   ├── endpoints/
-│   │   └── router.py
-│   ├── core/
-│   │   └── config.py
-│   ├── db/
-│   │   ├── base.py
-│   │   ├── seed.py
-│   │   └── session.py
-│   ├── models/
-│   │   ├── agent_settings.py
-│   │   ├── enums.py
-│   │   └── lead.py
-│   ├── schemas/
-│   │   ├── approach.py
-│   │   ├── auth.py
-│   │   ├── crm.py
-│   │   ├── dashboard.py
-│   │   ├── lead.py
-│   │   └── settings.py
-│   ├── services/
-│   │   ├── approach_service.py
-│   │   ├── crm_service.py
-│   │   ├── dashboard_service.py
-│   │   ├── diagnosis_service.py
-│   │   ├── lead_service.py
-│   │   ├── score_service.py
-│   │   └── settings_service.py
-│   └── main.py
 ├── postman/
 ├── tests/
+├── .env.example
+├── Procfile
+├── railway.json
 ├── requirements.txt
-└── server.js
+├── runtime.txt
+└── README.md
 ```
 
-## Como rodar
+## Variáveis de ambiente
 
-### Autenticacao Node + JWT
+Copie `backend/.env.example` para `backend/.env`.
+
+Variáveis principais:
+
+```env
+APP_ENV=development
+APP_PORT=8000
+DATABASE_URL=sqlite:///./leadflow.db
+CORS_ORIGINS=http://localhost:5173
+AUTH_JWT_SECRET=change-me-in-production
+GEMINI_ENABLED=false
+GEMINI_API_KEY=
+```
+
+Observações:
+
+- Em produção no Railway, a porta vem da variável `PORT`.
+- Não exponha segredos do backend no frontend.
+- Para PostgreSQL no Railway, configure `DATABASE_URL` com a connection string do serviço.
+
+## Rodando localmente
 
 ```bash
 cd backend
-npm install
-npm run dev
-```
-
-Rotas:
-
-- `GET /api/health`
-- `GET /api/auth/demo-capabilities`
-- `POST /api/auth/login`
-- `POST /api/auth/refresh`
-- `GET /api/auth/me`
-
-O login demo nao depende de banco. O header `x-demo-simulate` aceita:
-
-- `invalid_credentials`
-- `rate_limit`
-- `server_error`
-- `timeout`
-- `malformed_response`
-
-Testes:
-
-```bash
-cd backend
-npm test
-```
-
-Colecao Postman:
-
-- `backend/postman/leadflow-auth.postman_collection.json`
-
-### Dados FastAPI
-
-```bash
-cd backend
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-O backend cria tabelas e seed automaticamente no startup.
+## Build e validação local
 
-Por padrao ele usa banco real SQLite em `backend/leadflow.db`.
-Se quiser PostgreSQL, configure `DATABASE_URL=postgresql+psycopg://...`.
+```bash
+cd backend
+python3 -m compileall app
+python3 -m unittest discover -s tests
+```
 
-As rotas de dados exigem `Authorization: Bearer <token>` e aceitam:
+## Deploy no Railway
 
-- JWT emitido pelo backend Node usando o mesmo segredo
-- `demo-token` para o login demo local da API FastAPI
+Configure o serviço para apontar para `backend` como Root Directory.
 
-Rotas principais da API de dados:
+Parâmetros recomendados:
 
-- `GET /api/health`
-- `GET /api/dashboard`
-- `GET /api/leads`
-- `POST /api/leads`
-- `GET /api/leads/{lead_id}`
-- `PUT /api/leads/{lead_id}`
-- `DELETE /api/leads/{lead_id}`
-- `GET /api/crm/board`
-- `POST /api/crm/leads/{lead_id}/move`
-- `POST /api/crm/leads/{lead_id}/activities`
-- `POST /api/approaches/generate`
-- `GET /api/settings`
-- `PUT /api/settings`
+- Root Directory: `backend`
+- Start Command: deixar vazio se o Railway respeitar `railway.json` e `Procfile`; se quiser forçar na UI, use `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- Runtime/Builder: Python via Nixpacks
+
+Arquivos de deploy:
+
+- `Procfile`: fornece o processo `web`
+- `railway.json`: fixa o `startCommand`
+- `runtime.txt`: fixa a versão do Python
+- `requirements.txt`: define dependências Python
+
+## Legado preservado
+
+O backend Node antigo foi movido para `docs/legacy/backend-node-auth/` para evitar autodetecção incorreta de stack no Railway sem perder o histórico do código.

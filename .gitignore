@@ -1,1 +1,37 @@
+.DS_Store
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
 venv/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Build artifacts
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Local environment files
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env
+
+# Local databases and runtime files
+*.db
+*.sqlite
+*.sqlite3
+
+# Platform folders
+.vercel/
+.railway/
