@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.models.enums import MessageChannel, MessageDirection
 from app.models.lead import Lead
 from app.models.message_template import MessageTemplate
@@ -10,6 +11,7 @@ from app.schemas.lead import LeadUpdate
 from app.schemas.messages import LeadInteractionIn, MessageTemplateIn
 from app.services.lead_service import create_lead, get_lead_by_id, update_lead
 from app.services.message_service import create_interaction, create_template
+from app.services.auth_service import get_user_by_email, hash_password
 from app.services.settings_service import get_or_create_settings
 
 
@@ -19,8 +21,16 @@ def seed_database(db: Session) -> None:
         settings.description = "CRM com IA para captar, qualificar e converter leads de pequenos negocios."
         db.commit()
 
-    if db.query(User).count() == 0:
-        db.add(User(name="Admin Demo", email="admin@leadflow.ai", role="admin", password_hash="demo-password"))
+    if settings.default_admin_email and settings.default_admin_password and get_user_by_email(db, settings.default_admin_email) is None:
+        db.add(
+            User(
+                name=settings.default_admin_name,
+                email=settings.default_admin_email.lower(),
+                role="admin",
+                password_hash=hash_password(settings.default_admin_password),
+                is_active=True,
+            )
+        )
         db.commit()
 
     if db.query(MessageTemplate).count() == 0:
@@ -54,6 +64,9 @@ def seed_database(db: Session) -> None:
                 is_active=True,
             ),
         )
+
+    if settings.app_env != "development":
+        return
 
     if db.query(Lead).count() > 0:
         return

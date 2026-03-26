@@ -22,7 +22,6 @@ DEFAULT_SETTINGS = {
     "hot_lead_score_threshold": 80,
     "webhook_url": "",
     "provider_name": "gemini",
-    "provider_api_key": "",
     "positioning": "Operacao consultiva para captacao, qualificacao e CRM comercial de negocios locais em Manaus.",
     "target_niches": ["Barbearia", "Clinicas", "Imobiliarias", "Loja de moveis", "Salao de beleza"],
     "target_cities": ["Manaus"],
@@ -52,7 +51,7 @@ def serialize_settings(settings: AgentSettings) -> SettingsOut:
             "hot_lead_score_threshold": settings.hot_lead_score_threshold,
             "webhook_url": settings.webhook_url,
             "provider_name": settings.provider_name,
-            "has_provider_api_key": bool(settings.provider_api_key),
+            "has_provider_api_key": bool(settings.gemini_enabled and settings.gemini_api_key),
             "positioning": settings.positioning,
             "target_niches": settings.target_niches,
             "target_cities": settings.target_cities,
@@ -77,9 +76,6 @@ def get_or_create_settings(db: Session) -> AgentSettings:
 def update_settings(db: Session, payload: SettingsIn) -> AgentSettings:
     settings = get_or_create_settings(db)
     values = payload.model_dump(exclude_none=True)
-    if "provider_api_key" not in values:
-        values.pop("provider_api_key", None)
-
     for key, value in values.items():
         setattr(settings, key, value)
 

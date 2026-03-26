@@ -18,7 +18,6 @@ class SettingsIn(BaseModel):
     hot_lead_score_threshold: int = Field(ge=0, le=100)
     webhook_url: str = ""
     provider_name: str = "gemini"
-    provider_api_key: str | None = None
     positioning: str
     target_niches: list[str]
     target_cities: list[str]

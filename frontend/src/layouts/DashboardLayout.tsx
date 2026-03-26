@@ -32,20 +32,12 @@ export function DashboardLayout({ session, onLogout }: Props) {
         />
         <main className="min-w-0 flex-1 space-y-5">
           <Topbar session={session} onMenuToggle={() => setSidebarOpen((value) => !value)} />
-          <section
-            className={`surface-panel flex flex-wrap items-center justify-between gap-3 px-4 py-4 text-sm ${
-              session.dataSource === "mock" ? "text-amber-200" : "text-emerald-200"
-            }`}
-          >
+          <section className="surface-panel flex flex-wrap items-center justify-between gap-3 px-4 py-4 text-sm text-emerald-200">
             <div>
-              <p className="eyebrow">{session.dataSource === "mock" ? "Modo demo" : "Ambiente conectado"}</p>
-              <p className="mt-1 text-sm text-slate-300">
-                {session.dataSource === "mock"
-                  ? `Autenticacao ${session.authSource}. ${session.fallbackReason ?? "Dados locais em uso."}`
-                  : `Autenticacao ${session.authMode} via ${session.authSource}.`}
-              </p>
+              <p className="eyebrow">Ambiente conectado</p>
+              <p className="mt-1 text-sm text-slate-300">Autenticacao JWT ativa com sessao persistida no navegador.</p>
             </div>
-            <span className="metric-pill">{session.mode}</span>
+            <span className="metric-pill">jwt</span>
           </section>
           <Outlet />
         </main>

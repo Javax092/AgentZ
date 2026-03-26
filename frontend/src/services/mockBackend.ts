@@ -1,8 +1,8 @@
 import type {
   AgentSettings,
+  AuthResponse,
   CRMBoard,
   DashboardData,
-  DemoLoginResponse,
   Lead,
   LeadCreateInput,
   LeadStatus,
@@ -20,7 +20,7 @@ export const createOfflineSession = (_reason?: string) => {
   throw new Error("Modo offline desativado.");
 };
 
-export const loginOffline = (_email: string, _password: string, _reason?: string): DemoLoginResponse => {
+export const loginOffline = (_email: string, _password: string, _reason?: string): AuthResponse => {
   throw new Error("Modo offline desativado.");
 };
 

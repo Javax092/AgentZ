@@ -11,12 +11,16 @@ class Settings(BaseSettings):
     app_env: str = "development"
     app_host: str = "0.0.0.0"
     app_port: int = Field(default=8000, validation_alias=AliasChoices("APP_PORT", "PORT"))
-    database_url: str = "sqlite:///./leadflow.db"
+    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/leadflow"
     cors_origins: str = "http://localhost:5173"
-    demo_email: str = "admin@leadflow.ai"
-    demo_password: str = "123456"
-    auth_jwt_secret: str = "leadflow-local-demo-secret"
+    auth_jwt_secret: str = "change-me-in-production"
+    auth_access_token_ttl_seconds: int = 3600
+    auth_password_iterations: int = 600000
+    default_admin_name: str = "LeadFlow Admin"
+    default_admin_email: str = ""
+    default_admin_password: str = ""
     gemini_api_key: str = ""
+    gemini_provider_name: str = "gemini"
     gemini_model: str = "gemini-1.5-flash"
     gemini_timeout_seconds: float = 20.0
     gemini_enabled: bool = False

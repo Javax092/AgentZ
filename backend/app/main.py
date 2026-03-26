@@ -9,17 +9,14 @@ from fastapi.responses import JSONResponse
 
 from app.api.router import api_router
 from app.core.config import settings
-from app.db.base import Base, ensure_runtime_schema
 from app.db.seed import seed_database
-from app.db.session import SessionLocal, engine
+from app.db.session import SessionLocal
 
 logger = logging.getLogger("leadflow-api")
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    Base.metadata.create_all(bind=engine)
-    ensure_runtime_schema()
     db = SessionLocal()
     try:
         seed_database(db)

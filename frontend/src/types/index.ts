@@ -176,7 +176,6 @@ export interface SettingsInput {
   hot_lead_score_threshold: number;
   webhook_url: string;
   provider_name: string;
-  provider_api_key?: string;
   positioning: string;
   target_niches: string[];
   target_cities: string[];
@@ -281,34 +280,31 @@ export interface AINextAction {
 }
 
 export interface AuthUser {
-  id: string;
+  id: number;
   name: string;
   email: string;
   role: string;
 }
 
-export interface DemoLoginResponse {
+export interface AuthResponse {
   access_token: string;
-  refresh_token: string;
   token_type: string;
   expires_in: number;
-  auth_mode: string;
-  database_required: boolean;
   requestId?: string;
   user: AuthUser;
 }
 
+export interface RegisterInput {
+  name: string;
+  email: string;
+  password: string;
+}
+
 export interface AppSession {
   accessToken: string;
-  refreshToken: string;
   tokenType: string;
   expiresIn: number;
-  authMode: string;
-  authSource: "api" | "local-mock";
-  dataSource: "remote" | "mock";
   requestId?: string;
-  mode: "remote" | "hybrid" | "offline-demo";
-  fallbackReason?: string;
   user: AuthUser;
   createdAt: string;
 }

@@ -3,10 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { authApi } from "../services/api";
 
 export function LoginPage() {
-  const [email, setEmail] = useState("admin@leadflow.ai");
-  const [password, setPassword] = useState("123456");
+  const [mode, setMode] = useState<"login" | "register">("login");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [status, setStatus] = useState("Autenticacao demo com fallback offline habilitado.");
+  const [status, setStatus] = useState("Autenticacao JWT ativa com usuario persistido no banco.");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -14,21 +16,20 @@ export function LoginPage() {
     event.preventDefault();
     setLoading(true);
     setError("");
-    setStatus("Validando backend de autenticacao e disponibilidade dos dados...");
+    setStatus(mode === "login" ? "Validando credenciais..." : "Criando usuario e abrindo workspace...");
 
     try {
-      const session = await authApi.login(email, password);
-      setStatus(
-        session.mode === "offline-demo"
-          ? `Login liberado em modo offline. Motivo: ${session.fallbackReason}`
-          : session.dataSource === "mock"
-            ? "Login remoto concluido. API indisponivel para dados, usando seed demo local."
-            : "Login remoto concluido com sessao persistida e API online."
-      );
+      if (mode === "register") {
+        await authApi.register({ name, email, password });
+        setStatus("Conta criada e autenticada com sucesso.");
+      } else {
+        await authApi.login(email, password);
+        setStatus("Login concluido com sucesso.");
+      }
       navigate("/dashboard");
     } catch (loginError) {
-      setError(loginError instanceof Error ? loginError.message : "Falha no login de demonstracao.");
-      setStatus("Nao foi possivel concluir a autenticacao demo.");
+      setError(loginError instanceof Error ? loginError.message : "Falha na autenticacao.");
+      setStatus("Nao foi possivel concluir a autenticacao.");
     } finally {
       setLoading(false);
     }
@@ -41,7 +42,7 @@ export function LoginPage() {
           <p className="eyebrow text-teal-200">LeadFlow AI</p>
           <h1 className="mt-4 max-w-xl font-display text-5xl leading-[1.05]">O cockpit comercial para operações de geração de demanda com IA.</h1>
           <p className="mt-5 max-w-2xl text-base leading-8 text-slate-200">
-            Centralize prospecção, diagnóstico, scoring, CRM e mensagens prontas em uma experiência premium voltada para produtividade comercial e percepção de valor.
+            Centralize prospecção, diagnóstico, scoring, CRM e mensagens prontas em uma experiência premium voltada para produtividade comercial e operação real.
           </p>
           <div className="mt-10 grid gap-4 md:grid-cols-3">
             {[
@@ -58,19 +59,31 @@ export function LoginPage() {
         </section>
         <form onSubmit={handleSubmit} className="w-full max-w-xl justify-self-center rounded-[32px] border border-white/70 bg-white/92 p-6 shadow-panel backdrop-blur-xl md:p-8">
           <p className="eyebrow">Acesso seguro</p>
-          <p className="mt-3 font-display text-4xl text-ink">Entre no LeadFlow AI</p>
-          <p className="mt-3 text-sm leading-6 text-slate-500">Abra seu workspace de CRM e automação comercial com uma interface preparada para operação diária, análise e conversão.</p>
+          <p className="mt-3 font-display text-4xl text-ink">{mode === "login" ? "Entre no LeadFlow AI" : "Crie sua conta"}</p>
+          <p className="mt-3 text-sm leading-6 text-slate-500">Abra seu workspace de CRM e automação comercial com autenticação real e sessão persistida.</p>
           <div className="mt-5 rounded-2xl border border-brand/10 bg-brand/5 px-4 py-3 text-sm leading-6 text-slate-600">{status}</div>
           <div className="mt-8 space-y-4">
+            {mode === "register" ? <input className="field-input" aria-label="Nome" placeholder="Nome" value={name} onChange={(e) => setName(e.target.value)} /> : null}
             <input className="field-input" aria-label="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
             <input className="field-input" aria-label="Senha" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
-        {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
-        <button disabled={loading} className="btn-primary mt-6 w-full">
-          {loading ? "Entrando..." : "Entrar"}
-        </button>
-        <p className="mt-4 text-center text-xs uppercase tracking-[0.18em] text-slate-400">Demo pronta para CRM, automação e geração de leads</p>
-      </form>
+          {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
+          <button disabled={loading} className="btn-primary mt-6 w-full">
+            {loading ? "Processando..." : mode === "login" ? "Entrar" : "Criar conta"}
+          </button>
+          <button
+            type="button"
+            className="btn-secondary mt-3 w-full"
+            onClick={() => {
+              setMode((current) => (current === "login" ? "register" : "login"));
+              setError("");
+              setStatus("Autenticacao JWT ativa com usuario persistido no banco.");
+            }}
+          >
+            {mode === "login" ? "Criar nova conta" : "Ja tenho conta"}
+          </button>
+          <p className="mt-4 text-center text-xs uppercase tracking-[0.18em] text-slate-400">Producao real com JWT e PostgreSQL</p>
+        </form>
       </div>
     </div>
   );

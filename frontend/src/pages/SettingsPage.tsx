@@ -22,7 +22,6 @@ export function SettingsPage({ settings, onSave }: Props) {
     hot_lead_score_threshold: 80,
     webhook_url: "",
     provider_name: "gemini",
-    provider_api_key: "",
     positioning: "",
     target_niches: [],
     target_cities: [],
@@ -54,7 +53,6 @@ export function SettingsPage({ settings, onSave }: Props) {
       hot_lead_score_threshold: settings.hot_lead_score_threshold,
       webhook_url: settings.webhook_url,
       provider_name: settings.provider_name,
-      provider_api_key: "",
       positioning: settings.positioning,
       target_niches: settings.target_niches,
       target_cities: settings.target_cities,
@@ -151,8 +149,9 @@ export function SettingsPage({ settings, onSave }: Props) {
             <input className="field-input" placeholder="Webhook URL" value={form.webhook_url} onChange={(e) => setForm((current) => ({ ...current, webhook_url: e.target.value }))} />
             <input className="field-input" placeholder="Provider da IA" value={form.provider_name} onChange={(e) => setForm((current) => ({ ...current, provider_name: e.target.value }))} />
           </div>
-
-          <input className="field-input" placeholder={settings?.has_provider_api_key ? "Nova API key do provider (opcional)" : "API key do provider"} value={form.provider_api_key ?? ""} onChange={(e) => setForm((current) => ({ ...current, provider_api_key: e.target.value }))} />
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300">
+            A chave do provider fica somente no backend via variavel de ambiente. Status atual: {settings?.has_provider_api_key ? "configurada" : "nao configurada"}.
+          </div>
 
           <div className="grid gap-4 md:grid-cols-3">
             <input type="number" className="field-input" placeholder="Peso budget alto" value={form.qualification_rules.budget_weights?.high ?? 30} onChange={(e) => setForm((current) => ({ ...current, qualification_rules: { ...current.qualification_rules, budget_weights: { ...current.qualification_rules.budget_weights, high: Number(e.target.value) } } }))} />

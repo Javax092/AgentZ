@@ -47,7 +47,7 @@ Arquivo: `backend/.env`
 ```env
 APP_ENV=development
 APP_PORT=8000
-DATABASE_URL=sqlite:///./leadflow.db
+DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/leadflow
 CORS_ORIGINS=http://localhost:5173
 AUTH_JWT_SECRET=change-me-in-production
 GEMINI_ENABLED=false
@@ -114,7 +114,7 @@ Checklist:
 
 - Root Directory: `backend`
 - Variáveis configuradas no serviço: `DATABASE_URL`, `CORS_ORIGINS`, `AUTH_JWT_SECRET`, `GEMINI_*` quando necessário
-- Start command explícito: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- Start command explícito: `alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 - Não depender de arquivos da raiz do monorepo
 
 Arquivos usados pelo Railway:

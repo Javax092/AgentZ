@@ -4,9 +4,9 @@ import type {
   AIResponseSuggestion,
   AISummary,
   AppSession,
+  AuthResponse,
   CRMBoard,
   DashboardData,
-  DemoLoginResponse,
   Lead,
   LeadCreateInput,
   LeadInteraction,
@@ -16,6 +16,7 @@ import type {
   MessageTemplate,
   MessageTemplateInput,
   PipelineStage,
+  RegisterInput,
   SettingsInput
 } from "../types";
 import { clearSession, getSession, saveSession } from "./session";
@@ -34,17 +35,12 @@ export class ApiError extends Error {
   }
 }
 
-function toAppSession(response: DemoLoginResponse): AppSession {
+function toAppSession(response: AuthResponse): AppSession {
   return {
     accessToken: response.access_token,
-    refreshToken: response.refresh_token,
     tokenType: response.token_type,
     expiresIn: response.expires_in,
-    authMode: response.auth_mode,
-    authSource: "api",
-    dataSource: "remote",
     requestId: response.requestId,
-    mode: "remote",
     user: response.user,
     createdAt: new Date().toISOString()
   };
@@ -90,8 +86,17 @@ async function fetchAuthed<T>(path: string, init?: RequestInit) {
 }
 
 export const authApi = {
+  async register(payload: RegisterInput) {
+    const response = await requestJson<AuthResponse>("/auth/register", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+    const session = toAppSession(response);
+    saveSession(session);
+    return session;
+  },
   async login(email: string, password: string) {
-    const response = await requestJson<DemoLoginResponse>("/auth/login", {
+    const response = await requestJson<AuthResponse>("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password })
     });
@@ -99,6 +104,7 @@ export const authApi = {
     saveSession(session);
     return session;
   },
+  me: () => fetchAuthed("/auth/me"),
   logout() {
     clearSession();
   },

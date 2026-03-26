@@ -32,7 +32,6 @@ class AgentSettings(Base):
     hot_lead_score_threshold: Mapped[int] = mapped_column(Integer, nullable=False, default=80)
     webhook_url: Mapped[str] = mapped_column(Text, nullable=False, default="")
     provider_name: Mapped[str] = mapped_column(String(60), nullable=False, default="gemini")
-    provider_api_key: Mapped[str] = mapped_column(Text, nullable=False, default="")
     positioning: Mapped[str] = mapped_column(Text, nullable=False, default="Automações, landing pages e sistemas web sob medida.")
     target_niches: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     target_cities: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)

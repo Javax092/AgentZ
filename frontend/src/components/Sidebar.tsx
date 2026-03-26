@@ -97,9 +97,9 @@ export function Sidebar({ session, onLogout, mobileOpen, onClose, collapsed, onT
               </button>
             </div>
             <div className={`mt-4 items-center justify-between rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-2 text-xs text-slate-300 ${collapsed ? "hidden" : "flex"}`}>
-              <span>{session.mode}</span>
+              <span>workspace</span>
               <span className="rounded-full bg-emerald-400/20 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-200">
-                {session.dataSource === "mock" ? "demo" : "online"}
+                online
               </span>
             </div>
           </div>
