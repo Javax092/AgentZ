@@ -295,9 +295,10 @@ export interface AuthResponse {
 }
 
 export interface RegisterInput {
-  name: string;
+  full_name: string;
   email: string;
   password: string;
+  confirm_password: string;
 }
 
 export interface AppSession {

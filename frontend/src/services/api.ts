@@ -26,12 +26,14 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000
 export class ApiError extends Error {
   statusCode?: number;
   requestId?: string;
+  errors?: Array<{ field?: string; message?: string }>;
 
-  constructor(message: string, options?: { statusCode?: number; requestId?: string }) {
+  constructor(message: string, options?: { statusCode?: number; requestId?: string; errors?: Array<{ field?: string; message?: string }> }) {
     super(message);
     this.name = "ApiError";
     this.statusCode = options?.statusCode;
     this.requestId = options?.requestId;
+    this.errors = options?.errors;
   }
 }
 
@@ -57,12 +59,39 @@ async function requestJson<T>(path: string, init?: RequestInit, accessToken?: st
   });
 
   const text = await response.text();
-  const json = text ? JSON.parse(text) : undefined;
+  let json: unknown;
+  try {
+    json = text ? JSON.parse(text) : undefined;
+  } catch {
+    json = undefined;
+  }
+
+  const payload = (json && typeof json === "object") ? (json as Record<string, unknown>) : undefined;
 
   if (!response.ok) {
-    throw new ApiError(json?.message ?? json?.detail ?? "Falha na API.", {
+    const errors = Array.isArray(payload?.errors)
+      ? payload.errors
+          .filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object"))
+          .map((item) => ({
+            field: typeof item.field === "string" ? item.field : undefined,
+            message: typeof item.message === "string" ? item.message : undefined
+          }))
+      : undefined;
+
+    const fallbackDetail = payload?.detail;
+    const detailMessage =
+      typeof payload?.message === "string"
+        ? payload.message
+        : typeof fallbackDetail === "string"
+          ? fallbackDetail
+          : Array.isArray(errors) && errors.length > 0
+            ? errors.map((item) => item.message).filter(Boolean).join(" ")
+            : "Falha na API.";
+
+    throw new ApiError(detailMessage, {
       statusCode: response.status,
-      requestId: json?.requestId
+      requestId: typeof payload?.requestId === "string" ? payload.requestId : undefined,
+      errors
     });
   }
 

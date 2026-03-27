@@ -6,6 +6,7 @@ import secrets
 from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -117,6 +118,16 @@ def get_user_by_email(db: Session, email: str) -> User | None:
     return db.scalars(select(User).where(User.email == email.lower())).first()
 
 
+def _is_duplicate_email_error(exc: IntegrityError) -> bool:
+    message = str(exc.orig).lower()
+    return "email" in message and (
+        "unique" in message
+        or "duplicate" in message
+        or "ix_users_email" in message
+        or "users.email" in message
+    )
+
+
 def create_user(db: Session, payload: RegisterIn, role: str = "admin") -> User:
     existing = get_user_by_email(db, payload.email)
     if existing:
@@ -130,7 +141,16 @@ def create_user(db: Session, payload: RegisterIn, role: str = "admin") -> User:
         is_active=True,
     )
     db.add(user)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        if _is_duplicate_email_error(exc):
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Ja existe usuario com este email") from exc
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Nao foi possivel salvar a conta no banco de dados.",
+        ) from exc
     db.refresh(user)
     return user
 

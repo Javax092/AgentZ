@@ -4,22 +4,71 @@ import uuid
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.router import api_router
 from app.core.config import settings
 from app.db.seed import seed_database
-from app.db.session import SessionLocal
+from app.db.session import SessionLocal, verify_database_connection
 
 logger = logging.getLogger("leadflow-api")
 
 
+def _humanize_validation_message(field: str, error: dict) -> str:
+    error_type = error.get("type", "")
+    if field == "email" and error_type.startswith("value_error"):
+        return "Informe um email valido."
+    if error_type == "extra_forbidden":
+        return f"O campo '{field}' nao e aceito nesta rota."
+    if error_type == "missing":
+        return f"O campo '{field}' e obrigatorio."
+    if error_type == "string_too_short":
+        if field in {"password", "confirm_password", "confirmPassword"}:
+            return "A senha deve ter pelo menos 8 caracteres."
+        return f"O campo '{field}' nao pode ficar vazio."
+    if error_type == "value_error":
+        context = error.get("ctx", {})
+        raw_message = context.get("error")
+        if raw_message:
+            return str(raw_message)
+    if error_type == "value_error.email":
+        return "Informe um email valido."
+    return error.get("msg", "Valor invalido.")
+
+
+def _format_validation_errors(exc: RequestValidationError) -> list[dict[str, str]]:
+    formatted_errors: list[dict[str, str]] = []
+    for error in exc.errors():
+        location = [str(item) for item in error.get("loc", []) if item != "body"]
+        field = ".".join(location) if location else "body"
+        formatted_errors.append(
+            {
+                "field": field,
+                "message": _humanize_validation_message(field, error),
+                "type": error.get("type", "validation_error"),
+            }
+        )
+    return formatted_errors
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    logger.info("validating_database_connection")
+    try:
+        verify_database_connection()
+    except Exception:
+        logger.exception("database_connection_validation_failed")
+        raise
+
     db = SessionLocal()
     try:
+        logger.info("running_startup_seed")
         seed_database(db)
+    except Exception:
+        logger.exception("startup_seed_failed")
+        raise
     finally:
         db.close()
     yield
@@ -55,10 +104,28 @@ async def add_request_context(request: Request, call_next):
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
     request_id = getattr(request.state, "request_id", "n/a")
+    if isinstance(exc.detail, dict):
+        payload = {"error": "http_error", "requestId": request_id, **exc.detail}
+        payload.setdefault("message", "Falha na API.")
+        return JSONResponse(status_code=exc.status_code, content=payload)
+
     detail = exc.detail if isinstance(exc.detail, str) else "Falha na API."
+    return JSONResponse(status_code=exc.status_code, content={"error": "http_error", "message": detail, "requestId": request_id})
+
+
+@app.exception_handler(RequestValidationError)
+async def request_validation_exception_handler(request: Request, exc: RequestValidationError):
+    request_id = getattr(request.state, "request_id", "n/a")
+    errors = _format_validation_errors(exc)
+    message = errors[0]["message"] if errors else "Payload invalido."
     return JSONResponse(
-        status_code=exc.status_code,
-        content={"error": "http_error", "message": detail, "requestId": request_id},
+        status_code=422,
+        content={
+            "error": "validation_error",
+            "message": message,
+            "requestId": request_id,
+            "errors": errors,
+        },
     )
 
 
