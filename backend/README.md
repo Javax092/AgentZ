@@ -44,6 +44,7 @@ Observações:
 - Não exponha segredos do backend no frontend.
 - Para PostgreSQL no Railway, configure `DATABASE_URL` com a connection string do serviço.
 - A chave do provider de IA fica somente em variáveis de ambiente do backend.
+- `backend/.env` é apenas local e não deve ser commitado.
 
 ## Rodando localmente
 
@@ -52,6 +53,7 @@ cd backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env
 alembic upgrade head
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
@@ -60,8 +62,9 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 ```bash
 cd backend
-python3 -m compileall app
-python3 -m unittest discover -s tests
+source .venv/bin/activate
+python -m compileall app
+python -m unittest discover -s tests
 alembic upgrade head
 ```
 

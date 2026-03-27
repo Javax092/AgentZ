@@ -18,6 +18,7 @@ VITE_API_BASE_URL=http://localhost:8000/api
 ```
 
 Use apenas variáveis com prefixo `VITE_` no frontend. Segredos devem ficar somente no backend.
+Para overrides locais, prefira `frontend/.env.local`; esse arquivo nao deve ser commitado.
 
 ## Rodando localmente
 

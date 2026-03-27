@@ -76,6 +76,8 @@ cd backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env
+alembic upgrade head
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -93,8 +95,9 @@ npm run dev
 
 ```bash
 cd backend
-python3 -m compileall app
-python3 -m unittest discover -s tests
+source .venv/bin/activate
+python -m compileall app
+python -m unittest discover -s tests
 ```
 
 ### Frontend
@@ -116,6 +119,7 @@ Checklist:
 - Variáveis configuradas no serviço: `DATABASE_URL`, `CORS_ORIGINS`, `AUTH_JWT_SECRET`, `GEMINI_*` quando necessário
 - Start command explícito: `alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 - Não depender de arquivos da raiz do monorepo
+- Não subir `backend/.env`; segredos devem ficar nas variáveis do Railway
 
 Arquivos usados pelo Railway:
 
@@ -136,6 +140,7 @@ Checklist:
 - Build Command: `npm run build`
 - Output Directory: `dist`
 - Variável obrigatória: `VITE_API_BASE_URL=https://seu-backend.up.railway.app/api`
+- Use `frontend/.env.local` apenas para overrides locais; não versionar credenciais nem endpoints temporários
 
 ## Notas de robustez
 
